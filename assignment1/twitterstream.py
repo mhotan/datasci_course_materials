@@ -3,14 +3,14 @@ import urllib2 as urllib
 
 # See assignment1.html instructions or README for how to get these credentials
 
-api_key = "<Enter api key>"
-api_secret = "<Enter api secret>"
-access_token_key = "<Enter your access token key here>"
-access_token_secret = "<Enter your access token secret here>"
+api_key = "ePcMcKjyPsh3efD9s8Aqkc001"
+api_secret = "TxeUdKV2k78u2GkZoS3yecw2rtSVW5z29UKIXpejfWU0MwOZvx"
+access_token_key = "948566148-Blt6048a6ZoufvG90uJUdAlTtzSlJuz9dcVSCh9Z"
+access_token_secret = "qcW0faeFlmv5y7jvmNEdCGcfT8Ab8jk4zT4fezFOBcigN"
 
 _debug = 0
 
-oauth_token    = oauth.Token(key=access_token_key, secret=access_token_secret)
+oauth_token = oauth.Token(key=access_token_key, secret=access_token_secret)
 oauth_consumer = oauth.Consumer(key=api_key, secret=api_secret)
 
 signature_method_hmac_sha1 = oauth.SignatureMethod_HMAC_SHA1()
