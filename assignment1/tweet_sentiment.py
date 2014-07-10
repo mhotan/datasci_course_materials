@@ -22,7 +22,7 @@ def process_words(words):
         proc_words.append(word.lower())
     return proc_words
 
-#
+# Calculate the Sentiment.
 def calculate_sentiment(words):
     score = 0
     for word in words:
