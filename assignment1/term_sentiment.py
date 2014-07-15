@@ -1,6 +1,10 @@
+import codecs
 import os
 import sys
 import json
+
+UTF8Writer = codecs.getwriter('utf8')
+sys.stdout = UTF8Writer(sys.stdout)
 
 associated_words = {}
 
@@ -21,8 +25,8 @@ def process_words(words, scores):
     for word in words:
         word = word.strip() # Remove trailing and preceeding white spaces.
         # filter word or phrases removing punctuations, Quotations symbols.
-        # add the sentiment score of the word to the ongoing SUM
-        word = "".join(c for c in word if c not in ('!', '.', ':', ',', '?', '"'))  # Remove extra characters
+        # Remove extra characters
+        word = "".join(c for c in word if c not in ('!', '.', ':', ',', '?', '"', '(', ')', ';')).strip()
         if len(word) == 0 or word.find('@') != -1:
             continue
         proc_words.append(word.lower())
@@ -104,13 +108,14 @@ def calculate_sentiment(words, known_scores):
 def main():
     if not (len(sys.argv) == 2 or len(sys.argv) == 3):
         raise ValueError('Incorrect argument signature\n Correct signature: '
-                         'frequency.py <tweet_file> <output_file>(Optional)')
-    file_path = sys.argv[1]
-    if not os.path.isfile(file_path):
-        raise ValueError('Argument is not a file')
-    if len(sys.argv) == 3 and os.path.isfile(sys.argv[2]):
-        raise ValueError('Output Argument is not a file')
-    tweet_file = open(file_path)  # The first file will should have all the tweets per line
+                         'frequency.py <sentiment_file> <tweet_file>')
+    sentiment_file_path = sys.argv[1]
+    if not os.path.isfile(sentiment_file_path):
+        raise ValueError('Sentiment argument is not a file')
+    tweet_file_path = sys.argv[2]
+    if not os.path.isfile(tweet_file_path):
+        raise ValueError('Tweet file Argument is not a file')
+    tweet_file = open(tweet_file_path)  # The first file will should have all the tweets per line
 
     # Populate the Sentiment Library
     scores = build_scores_dictionary()
@@ -139,17 +144,12 @@ def main():
         if not (type(val) is int or type(val) is float):
             raise ValueError("Word \"" + key + "\" has incorrect value \"" + str(val) + "\" " + str(type(val)))
 
-    lines = []
     for key in scores:
-        lines.append(key + " " + str(scores[key]) + "\n")
-    output = ''.join(lines)
+        # if type(key) is unicode:
+        #     print key.encode('ascii', 'replace') + " " + str(scores[key])
+        # else:
+        print key + " " + str(scores[key])
 
-    if len(sys.argv) == 2:
-        print(output)
-    else:
-        output_file = open(sys.argv[2], 'w')
-        output_file.write(output)
-        output_file.close()
 
 if __name__ == '__main__':
     main()

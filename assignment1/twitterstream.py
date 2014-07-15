@@ -49,7 +49,7 @@ def twitterreq(url, method, parameters):
     return response
 
 def fetchsamples():
-    url = "https://api.twitter.com/1.1/search/tweets.json?q=microsoft&geocode=47.676628,-122.322202,5mi&lang=en"
+    url = "https://stream.twitter.com/1/statuses/sample.json"
     parameters = []
     response = twitterreq(url, "GET", parameters)
     for line in response:

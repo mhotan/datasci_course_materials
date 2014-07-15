@@ -1,8 +1,9 @@
-import json
 import os
 import sys
+
 import twitter_query as tq
-import tweet_sentiment2 as ts
+from assignment1.helper import tweet_sentiment2 as ts
+
 
 __author__ = 'mhotan'
 
@@ -167,7 +168,7 @@ def extract_states_from_coordinates(coordinates):
 def extract_states_from_place(tweet_json):
     found = False
     states_found = None
-    if not tweet_json['place'] is None:
+    if 'place' in tweet_json and not tweet_json['place'] is None:
         coordinates = tweet_json['place']['bounding_box']['coordinates']
         if coordinates is None or len(coordinates) == 0:
             # Extract name from other place.
@@ -176,7 +177,7 @@ def extract_states_from_place(tweet_json):
         else:
             states_found = extract_states_from_coordinates(coordinates)
             found |= len(states_found) > 0
-    if not tweet_json['user'] is None and len(tweet_json['user']['location']) > 0 and not found:
+    if 'user' in tweet_json and not tweet_json['user'] is None and len(tweet_json['user']['location']) > 0 and not found:
         states_found = extract_states_from_full_name(tweet_json['user']['location'])
 
     if states_found is None or len(states_found) == 0:

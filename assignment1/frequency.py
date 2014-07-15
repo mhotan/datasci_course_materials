@@ -1,6 +1,10 @@
+import codecs
 import json
 import os
 import sys
+
+UTF8Writer = codecs.getwriter('utf8')
+sys.stdout = UTF8Writer(sys.stdout)
 
 __author__ = 'mhotan'
 
@@ -13,7 +17,8 @@ def process_words(words):
         word = word.strip() # Remove trailing and preceeding white spaces.
         # filter word or phrases removing punctuations, Quotations symbols.
         # add the sentiment score of the word to the ongoing SUM
-        word = "".join(c for c in word if c not in ('!', '.', ':', ',', '?', '"'))  # Remove extra characters
+        # Remove extra characters
+        word = "".join(c for c in word if c not in ('!', '.', ':', ',', '?', '"', '(', ')', ';')).strip()
         if len(word) == 0 or word.find('@') != -1:
             continue
         proc_words.append(word.lower())
@@ -61,6 +66,9 @@ def main():
         count_words(words, word_counts)
     frequencies = calc_frequencies(word_counts)
     for word in frequencies:
+        # if type(word) is unicode:
+        #     print word.encode('ascii', 'replace') + " " + str(frequencies[word])
+        # else:
         print word + " " + str(frequencies[word])
 
 if __name__ == '__main__':

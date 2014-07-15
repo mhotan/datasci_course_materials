@@ -1,7 +1,10 @@
+import codecs
 import json
 import os
 import sys
 
+UTF8Writer = codecs.getwriter('utf8')
+sys.stdout = UTF8Writer(sys.stdout)
 
 __author__ = 'mhotan'
 
@@ -134,8 +137,8 @@ def extract_states_from_full_name(full_name):
     proc_words = []
     for word in words:
         word = word.strip() # Remove trailing and preceeding white spaces.
-        # Remove punctuations.
-        word = "".join(c for c in word if c not in ('!','.',':',',',"\""))  # Remove common punctuations and quotes
+        # Remove extra characters
+        word = "".join(c for c in word if c not in ('!', '.', ':', ',', '?', '"', '(', ')', ';')).strip()
         proc_words.append(word)
 
     # Look for country code in any of the words.
@@ -165,7 +168,7 @@ def extract_states_from_coordinates(coordinates):
 def extract_states_from_place(tweet_json):
     found = False
     states_found = None
-    if not tweet_json['place'] is None:
+    if 'place' in tweet_json and not tweet_json['place'] is None:
         coordinates = tweet_json['place']['bounding_box']['coordinates']
         if coordinates is None or len(coordinates) == 0:
             # Extract name from other place.
@@ -174,7 +177,7 @@ def extract_states_from_place(tweet_json):
         else:
             states_found = extract_states_from_coordinates(coordinates)
             found |= len(states_found) > 0
-    if not tweet_json['user'] is None and len(tweet_json['user']['location']) > 0 and not found:
+    if 'user' in tweet_json and not tweet_json['user'] is None and len(tweet_json['user']['location']) > 0 and not found:
         states_found = extract_states_from_full_name(tweet_json['user']['location'])
 
     if states_found is None or len(states_found) == 0:
@@ -188,14 +191,14 @@ def resolve_state(tweet_json, sentiment_score, score_mapping):
     if states_found is None:
         return
     for state in states_found:
-        score_mapping[state['name']] += sentiment_score
+        score_mapping[state['code']] += sentiment_score
 
 
 # Main method that validates script parameters.
 def main():
     if len(sys.argv) != 3:
         raise ValueError('Incorrect argument signature\n Correct signature: '
-                         'frequency.py <tweet_file>')
+                         'happiest_state.py <sentiment_file> <tweet_file>')
     sentiment_path = sys.argv[1]
     if not os.path.isfile(sentiment_path):
         raise ValueError('Sentiment file name is not a file')
@@ -217,7 +220,7 @@ def main():
     # Mapping of state name to scores.
     state_score = {}
     for state in states:
-        state_score[state['name']] = 0
+        state_score[state['code']] = 0
     sentiments = []
 
     # Read in all the sentiments
@@ -234,7 +237,7 @@ def main():
     tweet_file.close()
 
     sorted_scores = sorted(state_score.items(), key=lambda x: x[1], reverse=True)
-    print str(sorted_scores[0][0]) + " " + str(sorted_scores[0][1])
+    print str(sorted_scores[0][0]).upper()
 
 if __name__ == '__main__':
     main()
