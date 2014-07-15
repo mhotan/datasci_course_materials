@@ -1,3 +1,4 @@
+import json
 import oauth2 as oauth
 import urllib2 as urllib
 
@@ -48,12 +49,20 @@ def twitterreq(url, method, parameters):
     response = opener.open(url, encoded_post_data)
     return response
 
-def fetchsamples():
-    url = "https://api.twitter.com/1.1/search/tweets.json?q=microsoft&geocode=47.676628,-122.322202,5mi&lang=en"
+
+def get_json_result(url):
     parameters = []
     response = twitterreq(url, "GET", parameters)
     for line in response:
-        print line.strip()
+        return json.loads(line)['statuses']
+
+def main():
+    # obj = get_json_result(
+    #     'https://api.twitter.com/1.1/search/tweets.json?q=sounders&geocode=47.676628,-122.322202,20mi&lang=en&count=100')
+    obj = get_json_result(
+        'https://api.twitter.com/1.1/search/tweets.json?q=obama&geocode=38.897733,-77.036531,20mi&lang=en&count=100')
+    for sub_obj in obj:
+        print sub_obj
 
 if __name__ == '__main__':
-    fetchsamples()
+    main()

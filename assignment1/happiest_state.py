@@ -2,6 +2,7 @@ import json
 import os
 import sys
 
+
 __author__ = 'mhotan'
 
 # The coordinate is [lat, long]
@@ -71,8 +72,13 @@ def print_states():
         print state
 
 def find_state_by_name(name):
+    # If the state name is actually equal to the name
     for state in states:
         if state['name'].lower() == name.lower():
+            return state
+    # If the state name is in the input string.
+    for state in states:
+        if state['name'].lower() in name.lower():
             return state
     return None
 
@@ -122,32 +128,67 @@ def get_containing_state(lat, long):
             return state
     return None
 
-# Returns an array of states found.
-def extract_state_from_place(tweet_json):
-    # Check if there was a place with a coordinate
-    if not 'place' in tweet_json or tweet_json['place'] is None:
-        return None
-    coordinates = tweet_json['place']['bounding_box']['coordinates']
+def extract_states_from_full_name(full_name):
+    # Split the String
+    words = full_name.split(" ")
+    proc_words = []
+    for word in words:
+        word = word.strip() # Remove trailing and preceeding white spaces.
+        # Remove punctuations.
+        word = "".join(c for c in word if c not in ('!','.',':',',',"\""))  # Remove common punctuations and quotes
+        proc_words.append(word)
+
+    # Look for country code in any of the words.
+    for word in proc_words:
+        state = find_state_by_code(word)
+        if not state is None:
+            return [state]
+
+    # Find any word that equals the state.
+    for word in proc_words:
+        state = find_state_by_name(word)
+        if not state is None:
+            return [state]
+
+    return None
+
+def extract_states_from_coordinates(coordinates):
     states_found = []
     for coordinate in coordinates:
-        longitude = coordinate[0]
-        latitude = coordinate[1]
-        state_found = get_containing_state(latitude, longitude)
-        if state_found is None:
-            continue
-        states_found.append(state_found)
-    states_found = set(states_found)
-    if len(states_found) == 0:
+        state = get_containing_state(coordinate[1], coordinate[0])
+        if not state is None:
+            states_found.append(state)
+    return set(states_found)
+
+
+# Returns an array of states found.
+def extract_states_from_place(tweet_json):
+    found = False
+    states_found = None
+    if not tweet_json['place'] is None:
+        coordinates = tweet_json['place']['bounding_box']['coordinates']
+        if coordinates is None or len(coordinates) == 0:
+            # Extract name from other place.
+            states_found = extract_states_from_full_name(tweet_json['place']['full_name'])
+            found |= len(states_found) > 0
+        else:
+            states_found = extract_states_from_coordinates(coordinates)
+            found |= len(states_found) > 0
+    if not tweet_json['user'] is None and len(tweet_json['user']['location']) > 0 and not found:
+        states_found = extract_states_from_full_name(tweet_json['user']['location'])
+
+    if states_found is None or len(states_found) == 0:
         return None
-    return states_found
+    else:
+        return states_found
+
 
 def resolve_state(tweet_json, sentiment_score, score_mapping):
-    states_found = extract_state_from_place(tweet_json)
+    states_found = extract_states_from_place(tweet_json)
     if states_found is None:
-        print "No state found"
-    else:
-        print states_found
-#     TODO If no state was found check
+        return
+    for state in states_found:
+        score_mapping[state['name']] += sentiment_score
 
 
 # Main method that validates script parameters.
@@ -175,6 +216,8 @@ def main():
 
     # Mapping of state name to scores.
     state_score = {}
+    for state in states:
+        state_score[state['name']] = 0
     sentiments = []
 
     # Read in all the sentiments
@@ -189,6 +232,9 @@ def main():
     # Clean up the files
     sentiment_file.close()
     tweet_file.close()
+
+    sorted_scores = sorted(state_score.items(), key=lambda x: x[1], reverse=True)
+    print str(sorted_scores[0][0]) + " " + str(sorted_scores[0][1])
 
 if __name__ == '__main__':
     main()
