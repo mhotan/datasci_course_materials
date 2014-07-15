@@ -3,9 +3,6 @@ import json
 import os
 import sys
 
-UTF8Writer = codecs.getwriter('utf8')
-sys.stdout = UTF8Writer(sys.stdout)
-
 __author__ = 'mhotan'
 
 
@@ -66,10 +63,10 @@ def main():
         count_words(words, word_counts)
     frequencies = calc_frequencies(word_counts)
     for word in frequencies:
-        # if type(word) is unicode:
-        #     print word.encode('ascii', 'replace') + " " + str(frequencies[word])
-        # else:
-        print word + " " + str(frequencies[word])
+        if type(word) is unicode:
+            print "{0} {1}".format(word.encode('utf-8'), str(frequencies[word]))
+        else:
+            print "{0} {1}".format(word, str(frequencies[word]))
 
 if __name__ == '__main__':
     main()

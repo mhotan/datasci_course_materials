@@ -3,9 +3,6 @@ import os
 import sys
 import json
 
-UTF8Writer = codecs.getwriter('utf8')
-sys.stdout = UTF8Writer(sys.stdout)
-
 associated_words = {}
 
 
@@ -145,10 +142,10 @@ def main():
             raise ValueError("Word \"" + key + "\" has incorrect value \"" + str(val) + "\" " + str(type(val)))
 
     for key in scores:
-        # if type(key) is unicode:
-        #     print key.encode('ascii', 'replace') + " " + str(scores[key])
-        # else:
-        print key + " " + str(scores[key])
+        if type(key) is str:
+            print "{0} {1}".format(key, str(scores[key]))
+        else:
+            print "{0} {1}".format(key.encode('utf-8'), str(scores[key]))
 
 
 if __name__ == '__main__':
