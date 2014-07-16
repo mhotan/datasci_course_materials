@@ -5,17 +5,21 @@ import sys
 
 __author__ = 'mhotan'
 
+def process_word(word):
+    word = "".join(c for c in word if c not in ('!', '.', ':', ',', '?', '"', '(', ')', ';', '\'')).strip().lower()
+    if word.startswith("#"):
+        word.replace("#", '')
+    return word
 
 # Given an array of Strings processes all the words replaces the word with the processed word
 def process_words(words):
     words = words.split(' ')
     proc_words = []
     for word in words:
-        word = word.strip() # Remove trailing and preceeding white spaces.
         # filter word or phrases removing punctuations, Quotations symbols.
         # add the sentiment score of the word to the ongoing SUM
         # Remove extra characters
-        word = "".join(c for c in word if c not in ('!', '.', ':', ',', '?', '"', '(', ')', ';')).strip()
+        word = process_word(word)
         if len(word) == 0 or word.find('@') != -1:
             continue
         proc_words.append(word.lower())

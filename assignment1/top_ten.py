@@ -50,7 +50,7 @@ def main():
     for key in hashtag_count:
         frequencies[key] = calculate_frequency(key, hashtag_count)
 
-    sorted_hashtags = sorted(frequencies.items(), key=lambda hashtag: hashtag[1], reverse=True)
+    sorted_hashtags = sorted(hashtag_count.items(), key=lambda hashtag: hashtag[1], reverse=True)
     for idx in range(min(10, len(sorted_hashtags))):
         print "{0} {1}".format(sorted_hashtags[idx][0].encode('utf-8'), sorted_hashtags[idx][1])
 

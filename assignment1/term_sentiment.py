@@ -1,106 +1,58 @@
-import codecs
 import os
 import sys
 import json
 
-associated_words = {}
 
-
-def build_scores_dictionary():
-    scores = {}
-    afinn_file = open("AFINN-111.txt")
-     # initialize an empty dictionary
-    for line in afinn_file:
-        term, score = line.split("\t")  # The file is tab-delimited. "\t" means "tab character"
-        scores[term] = int(score)  # Convert the score to an integer.
-    return scores
-
+def process_word(word):
+    word = "".join(c for c in word if c not in ('!', '.', ':', ',', '?', '"', '(', ')', ';', '\'')).strip().lower()
+    if word.startswith("#"):
+        word.replace("#", '')
+    return word
 
 # Given an array of Strings processes all the words replaces the word with the processed word
-def process_words(words, scores):
-    proc_words = []
+def process_words(words, sentiment, associated_scores):
     for word in words:
-        word = word.strip() # Remove trailing and preceeding white spaces.
         # filter word or phrases removing punctuations, Quotations symbols.
         # Remove extra characters
-        word = "".join(c for c in word if c not in ('!', '.', ':', ',', '?', '"', '(', ')', ';')).strip()
+        word = process_word(word)
         if len(word) == 0 or word.find('@') != -1:
             continue
-        proc_words.append(word.lower())
-    # Find all the words not in the AFINN file
-    for word in proc_words:
-        if word not in scores:
-            # Add the current word
-            add_word_for_relations(word)
-            # Iterate through the other words add the association
-            for other_word in proc_words:
-                if other_word == word:
-                    continue
-                add_association(word, other_word, scores)
-
-    return proc_words
-
-# Adds a potential bidirectional association if one of the words is in AFINN-111.txt
-def add_association(word1, word2, scores):
-    # If both words have predefined scores then ignore it
-    # If both words do not have predefined scores then ignore it because there is not relation.
-    if word1 in scores and word2 in scores or word1 not in scores and word2 not in scores:
-        return
-
-    # Correctly assign the word to be tracked and the word with new score
-    if word1 in scores:
-        word_with_score = word1
-        word_without_score = word2
-    else:
-        word_with_score = word2
-        word_without_score = word1
-    add_word_for_relations(word_without_score)
-
-    # Update the correct mapping
-    if word_without_score in associated_words:
-        associated_words[word_without_score].append(word_with_score)
-
-
-# Adds the word to the negative and positive world association
-def add_word_for_relations(word):
-    if word not in associated_words and not word.startswith("@"):
-        associated_words[word] = []
+        if not word in associated_scores:
+            associated_scores[word] = []
+        associated_scores[word].append(sentiment)
 
 # Calculate the Sentiment of a given term.
-def calculate_sentiment(words, known_scores):
-    # For every word in the tweet's text
-    for word in words:
-        # If the word already has an associated sentiment score, continue to next word.
-        if word in known_scores:
-            continue
-        # If the word does not have a score check if the word is associated
-        # to a word that had an original sentiment score.
-        elif word in associated_words:
-            # Calculate the negative and positive weight
-            sent_words = associated_words[word]
-            pos_sent_score = 0
-            neg_sent_score = 0
-            # Appropriately assign the value to the negative or positive some
-            for sent_word in sent_words:
-                score = known_scores[sent_word]
-                if score < 0:
-                    neg_sent_score += score
-                else:
-                    pos_sent_score += score
-            # If the score is the same assign the score of "word" to 0
-            if pos_sent_score == neg_sent_score:
-                known_scores[word] = 0
-            elif pos_sent_score == 0:
-                known_scores[word] = neg_sent_score
-            elif neg_sent_score == 0:
-                known_scores[word] = pos_sent_score
-            else:
-                # calculate the weights based off of x = pos_sent_score / abs(neg_sent_score)
-                # if x is less then one, x = - 1 / x
-                x = float(pos_sent_score) / float(abs(neg_sent_score))
-                if x < 1:
-                    x = - (1.0 / x)
-                known_scores[word] = x
+def calculate_sentiment(word, associated_scores):
+    word = process_word(word)
+    pos = 0
+    neg = 0
+    scores = associated_scores[word]
+    for score in scores:
+        if score > 0:
+            pos += score
+        elif score < 0:
+            neg += abs(score)
+
+    # If the score is the same assign the score of "word" to 0
+    if pos == neg:
+        return 0
+    elif pos == 0:
+        return neg
+    elif neg == 0:
+        return pos
+    else:
+        x = float(pos) / float(neg)
+        if x >= 1:
+            return x
+        return -1.0 / x  # invert the fraction
+
+
+def get_num(value):
+    try:
+        return int(value)
+    except ValueError:
+        return 0
+
 
 def main():
     if not (len(sys.argv) == 2 or len(sys.argv) == 3):
@@ -113,13 +65,18 @@ def main():
     if not os.path.isfile(tweet_file_path):
         raise ValueError('Tweet file Argument is not a file')
     tweet_file = open(tweet_file_path)  # The first file will should have all the tweets per line
+    sentiment_file = open(sentiment_file_path)
 
-    # Populate the Sentiment Library
-    scores = build_scores_dictionary()
+    sentiments = []
+    for line in sentiment_file.readlines():
+        sentiments.append(get_num(line.strip()))
 
+    associated_scores = {}
+
+    lines = tweet_file.readlines()
      # Iterate through each JSON Object
-    for jsonObj in tweet_file.readlines():
-        tweet = json.loads(jsonObj)
+    for idx in range(len(lines)):
+        tweet = json.loads(lines[idx])
         # Extract the text field from the JSON Object
         if 'text' not in tweet:  # If there is no text then ignore this tweet.
             continue
@@ -129,23 +86,17 @@ def main():
 
         # Separate the words in the text.
         words = text.split(" ")
-        words = process_words(words, scores)
-        calculate_sentiment(words, scores)
+        process_words(words, sentiments[idx], associated_scores)
 
     # Close the files for the tweets
     tweet_file.close()
+    sentiment_file.close()
 
-    # Ensure the output values for all the word are in fact floats and ints
-    for key in scores:
-        val = scores[key]
-        if not (type(val) is int or type(val) is float):
-            raise ValueError("Word \"" + key + "\" has incorrect value \"" + str(val) + "\" " + str(type(val)))
-
-    for key in scores:
-        if type(key) is str:
-            print "{0} {1}".format(key, str(scores[key]))
+    for word in associated_scores:
+        if type(word) is unicode:
+            print "{0} {1}".format(word.encode('utf-8'), str(calculate_sentiment(word, associated_scores)))
         else:
-            print "{0} {1}".format(key.encode('utf-8'), str(scores[key]))
+            print "{0} {1}".format(word, str(calculate_sentiment(word, associated_scores)))
 
 
 if __name__ == '__main__':
