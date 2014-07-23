@@ -11,12 +11,8 @@ mr = MapReduce.MapReduce()
 # Do not modify above this line
 
 def mapper(record):
-    # key: document identifier
-    # value: document contents
-    key = record[0]
-    value = record[1]
-    words = value.split()
-    for w in words:
+    # Record : order or line_item tuple.
+    for w in record:
       mr.emit_intermediate(w, 1)
 
 def reducer(key, list_of_values):
