@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Assignment One Answer generation script
+
+# Generate the output for problem one
+
+A1_DELIVERABLE=${UW_DATASCI_PATH}/assignment1/deliverables/problem_1_submission.txt
+[[ -f $A1_DELIVERABLE ]] && rm -f $A1_DELIVERABLE
+touch $A1_DELIVERABLE
+head -n 20 ${UW_DATASCI_PATH}/assignment1/output/output.txt > $A1_DELIVERABLE
