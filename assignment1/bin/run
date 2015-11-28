@@ -1,10 +1,43 @@
-#!/bin/sh
+#!/bin/bash
 
 # Assignment One Answer generation script
 
+# Generate and record the twitter stream output.
+TWITTER_OUTPUT=${UW_DATASCI_PATH}/assignment1/output/output.txt
+if [ -f $TWITTER_OUTPUT ]; then
+  echo "Twitter Stream output already created"
+else
+  RUN_PROBLEMS="true"
+  echo "Creating Twitter Stream output file at $TWITTER_OUTPUT"
+  python twitterstream.py > $TWITTER_OUTPUT &
+  TASK_PID=$!
+  echo "Background process started $TASK_PID"
+  sleep 180 # Sleep 3 minutes
+  kill $TASK_PID
+  echo "Completed Twitter Stream output"
+fi
+
 # Generate the output for problem one
 
-A1_DELIVERABLE=${UW_DATASCI_PATH}/assignment1/deliverables/problem_1_submission.txt
-[[ -f $A1_DELIVERABLE ]] && rm -f $A1_DELIVERABLE
-touch $A1_DELIVERABLE
-head -n 20 ${UW_DATASCI_PATH}/assignment1/output/output.txt > $A1_DELIVERABLE
+if [ $RUN_PROBLEMS ]; then 
+  # Problem 1
+  A1_DELIVERABLE=${UW_DATASCI_PATH}/assignment1/deliverables/problem_1_submission.txt
+  if [ -f $A1_DELIVERABLE ]; then
+    echo "Deleting Old Artifact Assignment 1 Problem 1."
+    rm -f $A1_DELIVERABLE
+  fi
+  echo "Producing artifact for Assignment 1 Problem 1"
+  head -n 20 $TWITTER_OUTPUT > $A1_DELIVERABLE
+  echo "Assignment 1 Problem 1 Complete"
+
+  # Problem 2
+  A2_DEV_ARTIFACT=${UW_DATASCI_PATH}/assignment1/output/sentiment_scores.txt
+  if [ -f $A2_DEV_ARTIFACT ]; then
+    echo "Deleting Old Artifact Assignment 1 Problem 1."
+    rm -f $A2_DEV_ARTIFACT
+  fi
+  echo "Producing Development artifact for Problem 2"
+  python tweet_sentiment.py ${UW_DATASCI_PATH}/assignment1/AFINN-111.txt $TWITTER_OUTPUT > $A2_DEV_ARTIFACT
+  echo "Assignment 1 Problem 2 Complete"
+fi
+# Assignment 1 Problem 2
