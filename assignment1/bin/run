@@ -4,6 +4,7 @@
 
 # Generate and record the twitter stream output.
 TWITTER_OUTPUT=${UW_DATASCI_PATH}/assignment1/output/output.txt
+SENTIMENT_FILE=${UW_DATASCI_PATH}/assignment1/AFINN-111.txt
 if [ -f $TWITTER_OUTPUT ]; then
   echo "Twitter Stream output already created"
 else
@@ -31,13 +32,34 @@ if [ $RUN_PROBLEMS ]; then
   echo "Assignment 1 Problem 1 Complete"
 
   # Problem 2
-  A2_DEV_ARTIFACT=${UW_DATASCI_PATH}/assignment1/output/sentiment_scores.txt
+  A2_DEV_ARTIFACT=${UW_DATASCI_PATH}/assignment1/output/tweet_sentiment_scores.txt
   if [ -f $A2_DEV_ARTIFACT ]; then
     echo "Deleting Old Artifact Assignment 1 Problem 1."
     rm -f $A2_DEV_ARTIFACT
   fi
   echo "Producing Development artifact for Problem 2"
-  python tweet_sentiment.py ${UW_DATASCI_PATH}/assignment1/AFINN-111.txt $TWITTER_OUTPUT > $A2_DEV_ARTIFACT
+  python tweet_sentiment.py $SENTIMENT_FILE $TWITTER_OUTPUT > $A2_DEV_ARTIFACT
   echo "Assignment 1 Problem 2 Complete"
+
+  A3_DEV_ARTIFACT=${UW_DATASCI_PATH}/assignment1/output/term_sentiment_scores.txt
+  echo "Producing Development artifact for Problem 3"
+  python term_sentiment.py $SENTIMENT_FILE $TWITTER_OUTPUT > $A3_DEV_ARTIFACT
+  echo "Assignment 1 Problem 3 Complete"
+
+  A4_DEV_ARTIFACT=${UW_DATASCI_PATH}/assignment1/output/term_frequencies.txt
+  echo "Producing Development artifact for Problem 4"
+  python frequency.py $TWITTER_OUTPUT > $A4_DEV_ARTIFACT
+  echo "Assignment 1 Problem 4 Complete"
+
+  A5_DEV_ARTIFACT=${UW_DATASCI_PATH}/assignment1/output/happiest_state.txt
+  echo "Producing Development artifact for Problem 5"
+  python happiest_state.py $SENTIMENT_FILE $TWITTER_OUTPUT > $A5_DEV_ARTIFACT
+  echo "Assignment 1 Problem 5 Complete"
+
+  A6_DEV_ARTIFACT=${UW_DATASCI_PATH}/assignment1/output/top_ten.txt
+  echo "Producing Development artifact for Problem 6"
+  python top_ten.py $TWITTER_OUTPUT > A6_DEV_ARTIFACT
+  echo "Assignment 1 Problem 6 Complete"
 fi
-# Assignment 1 Problem 2
+
+python tweet_sentiment.py $SENTIMENT_FILE $TWITTER_OUTPUT

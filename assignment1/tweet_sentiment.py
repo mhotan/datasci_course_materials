@@ -8,10 +8,11 @@ def clean_word(word):
     word = word.strip().encode('utf-8').lower()
 
     # NOTE: Might not have to do this if I am checking if a word contains sentiment
-    exclude_chars = ['#', '!', '.', ':', ',', '?', '"', '(', ')', ';', '\'', '|', '-', ':', '#', '@', '&']
+    exclude_chars = ['#', '!', '.', ':', ',', '?', '"', '(', ')', ';', '|', '-', ':', '#', '@', '&']
     for exclude_char in exclude_chars:
         word = word.replace(exclude_char, '')
     return word
+
 
 def extract_words(tweet):
     """Given a JSON Twitter message extract and return a list of clean normalized words"""
@@ -24,14 +25,20 @@ def extract_words(tweet):
     return words
 
 
-def word_score(word1, word2, score_dict):
-    """Given a word provide the adequate score of that word using the score dictionary"""
-    if word1 in score_dict and word2 in score_dict:
-        return score_dict[word1] + score_dict[word2]
-    if word1 in score_dict:
-        return score_dict[word1]
-    if word2 in score_dict:
-        return score_dict[word2]
+def extract_tweets(tweet_file):
+    """Given a file containin a list of JSON tweet string return a collection of JSON objects"""
+    return map((lambda line: json.loads(line.strip())), tweet_file.readlines())
+
+
+def word_score(word, score_dict):
+    """
+    TODO
+    :param word:
+    :param score_dict:
+    :return:
+    """
+    if word in score_dict:
+        return score_dict[word]
     return 0
 
 
@@ -43,16 +50,27 @@ def generate_score_dict(sent_file):
     return scores
 
 
+def calculate_score(word_list, s):
+    """
+    Given a list of words and a score dictionary Calculate the score of the word
+    :param word_list: a list of words to score and aggregate.
+    :param score_dict: A dictionary of known words => sentiments
+    :return: The score of the word list.
+    """
+    return reduce((lambda x1,x2: x1+x2), map((lambda x: word_score(x, score_dict=s)), word_list), 0)
+
+
 def main():
     sent_file = open(sys.argv[1])
     tweet_file = open(sys.argv[2])
     s = generate_score_dict(sent_file)
 
-    tweet_jsons = map((lambda line: json.loads(line.strip())), tweet_file.readlines())
-    word_lists = map(extract_words, tweet_jsons) # Array of valuable words per tweet
-    scores = map((lambda word_list: reduce(functools.partial(word_score, score_dict=s), word_list, 0)), word_lists)
+    tweet_jsons = extract_tweets(tweet_file)
+    word_lists = map(extract_words, tweet_jsons)  # Array of valuable words per tweet
+    scores = map(functools.partial(calculate_score, s=s), word_lists)
     for score in scores:
         print score
+
 
 if __name__ == '__main__':
     main()
